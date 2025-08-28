@@ -50,8 +50,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         }
       } else {
         if (mounted) {
-          showDialog(
+          await showDialog(
             context: context,
+            barrierDismissible: false,
             builder: (context) => AlertDialog(
               title: const Text('No registrado'),
               content: const Text(
@@ -59,7 +60,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
                   child: const Text('Cancelar'),
                 ),
                 TextButton(
@@ -96,6 +99,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         );
       }
     } finally {
+      // Solo liberar el procesamiento después de que el usuario cierre el diálogo
       setState(() => _processing = false);
     }
   }
