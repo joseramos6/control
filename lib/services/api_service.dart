@@ -7,10 +7,20 @@ class ApiService {
   final supabase = Supabase.instance.client;
 
   // Registrar acceso en la tabla acceso
-  Future<void> registrarAcceso(String identificacion) async {
+  Future<void> registrarAcceso({
+    required int idpersona,
+    required String nombre,
+    required String telefono,
+    required String tipo,
+  }) async {
     final response = await supabase.from('acceso').insert({
-      'identificacion': identificacion,
-      'fecha_hora': DateTime.now().toIso8601String(),
+      'idpersona': idpersona,
+      'nombre': nombre,
+      'telefono': telefono,
+      'tipo': tipo,
+      'fecha': DateTime.now().toIso8601String(),
+      'hora':
+          '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}:${DateTime.now().second.toString().padLeft(2, '0')}',
     });
     if (response.error != null) {
       throw Exception('Error al registrar acceso: ${response.error!.message}');
@@ -45,6 +55,26 @@ class ApiService {
       throw Exception('Identificación o contraseña incorrecta');
     }
     return Persona.fromJson(response);
+  }
+
+  // Validar si la identificación ya existe
+  Future<bool> existeIdentificacion(String identificacion) async {
+    final response = await supabase
+        .from('persona')
+        .select('identificacion')
+        .eq('identificacion', identificacion)
+        .maybeSingle();
+    return response != null;
+  }
+
+  // Validar si el email ya existe
+  Future<bool> existeEmail(String email) async {
+    final response = await supabase
+        .from('persona')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+    return response != null;
   }
 
   // Registrar una nueva persona en la base de datos

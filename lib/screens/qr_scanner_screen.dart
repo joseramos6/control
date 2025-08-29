@@ -30,15 +30,29 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       final persona = await api.buscarPersonaPorIdentificacion(cleanId);
       if (persona != null) {
         try {
-          await api.registrarAcceso(persona.identificacion);
+          // Determinar tipo de usuario
+          String tipo = persona.esAdmin
+              ? 'admin'
+              : (persona.esLectura ? 'lectura' : 'usuario');
+          await api.registrarAcceso(
+            idpersona: persona.id,
+            nombre: persona.nombres,
+            telefono: persona.telefono,
+            tipo: tipo,
+          );
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Error registrando acceso: \\${e.toString()}'),
+                content: Text(
+                  'Error registrando acceso: '
+                  '${e is Exception ? e.toString() : e}',
+                ),
+                duration: Duration(seconds: 6),
               ),
             );
           }
+          print('Error Supabase al registrar acceso: $e');
         }
         if (mounted) {
           Navigator.pushReplacement(
@@ -107,16 +121,97 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Escanear QR')),
-      body: MobileScanner(
-        onDetect: (capture) {
-          if (_processing) return;
-          final List<Barcode> barcodes = capture.barcodes;
-          if (barcodes.isNotEmpty) {
-            final String identificacion = barcodes.first.rawValue!;
-            _handleScan(identificacion);
-          }
-        },
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        title: const Text('Escanear QR'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
+            onPressed: () {
+              // Navegar al login_screen y limpiar el stack
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/', (route) => false);
+            },
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          // Escáner QR
+          MobileScanner(
+            onDetect: (capture) {
+              if (_processing) return;
+              final List<Barcode> barcodes = capture.barcodes;
+              if (barcodes.isNotEmpty) {
+                final String identificacion = barcodes.first.rawValue!;
+                _handleScan(identificacion);
+              }
+            },
+          ),
+          // Overlay con instrucciones
+          Positioned(
+            bottom: 100,
+            left: 24,
+            right: 24,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.qr_code_scanner,
+                      size: 48,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Apunta la cámara hacia el código QR',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'El escaneo se realizará automáticamente',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Indicador de procesamiento
+          if (_processing)
+            Container(
+              color: Colors.black54,
+              child: Center(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Procesando...',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

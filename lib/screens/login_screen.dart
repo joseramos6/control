@@ -38,35 +38,15 @@ class _LoginScreenState extends State<LoginScreen> {
       final persona = await apiService.login(identificacion, password);
       if (mounted) {
         Navigator.of(context).pop(); // Cierra el loader
-        String mensaje;
-        if (persona.esAdmin) {
-          mensaje = '¡Bienvenido administrador!';
-        } else {
-          mensaje = 'Bienvenido usuario.';
-        }
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Inicio de sesión exitoso'),
-            content: Text(mensaje),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => QrGeneratorScreen(
-                        identificacion: persona.identificacion,
-                        esAdmin: persona.esAdmin,
-                        esLectura: persona.esLectura,
-                      ),
-                    ),
-                  );
-                },
-                child: const Text('Continuar'),
-              ),
-            ],
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => QrGeneratorScreen(
+              identificacion: persona.identificacion,
+              nombre: persona.nombres,
+              esAdmin: persona.esAdmin,
+              esLectura: persona.esLectura,
+            ),
           ),
         );
       }
@@ -93,63 +73,108 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Inicio de Sesión'),
-        backgroundColor: Colors.blueAccent,
-        elevation: 4,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Icono o logo de la aplicación
-              Icon(Icons.lock_person, size: 80, color: Colors.blueAccent),
-              const SizedBox(height: 32),
-
-              // Campo de texto para la identificación (usuario)
-              TextField(
-                controller: _identificacionController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Identificación',
-                  prefixIcon: Icon(Icons.person_outline),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Campo de texto para la contraseña
-              TextField(
-                controller: _passwordController,
-                obscureText: true, // Oculta el texto de la contraseña
-                decoration: const InputDecoration(
-                  labelText: 'Contraseña',
-                  prefixIcon: Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Botón de inicio de sesión
-              ElevatedButton(
-                onPressed: _handleLogin,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+      backgroundColor: Colors.grey.shade50,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo/Icono principal
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                  child: const Icon(
+                    Icons.security,
+                    size: 60,
+                    color: Colors.white,
                   ),
                 ),
-                child: const Text(
-                  'Iniciar Sesión',
-                  style: TextStyle(fontSize: 16),
+                const SizedBox(height: 32),
+
+                // Título
+                Text(
+                  'Control de Acceso',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade800,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  'Ingresa tus credenciales para continuar',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 48),
+
+                // Tarjeta de login
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Campo de identificación
+                        TextField(
+                          controller: _identificacionController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Identificación',
+                            prefixIcon: Icon(
+                              Icons.person_outline,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Campo de contraseña
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: 'Contraseña',
+                            prefixIcon: Icon(
+                              Icons.lock_outline,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Botón de login
+                        FilledButton.icon(
+                          onPressed: _handleLogin,
+                          icon: const Icon(Icons.login),
+                          label: const Text('Iniciar Sesión'),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            textStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
